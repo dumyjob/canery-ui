@@ -22,25 +22,26 @@ export default defineConfig({
       redirect: '/home',
     },
     {
+      name: '服务列表',
+      path: '/projects',
+      component: './Projects',
+    },
+    {
       name: '发布单',
       path: '/release',
       component: './Releases',
     },
-    {
-      name: '应用列表',
-      path: '/projects',
-      component: './Projects',
+   {
+      name: '应用部署',
+      path: '/deploy',
+      component: './Deploys',
     },
      {
       name: 'Pods',
       path: '/pods',
       component: './Pods',
     },
-     {
-      name: '应用部署',
-      path: '/deploy',
-      component: './Deploys',
-    },
+    
     {
       name: '首页',
       path: '/home',
