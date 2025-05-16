@@ -1,0 +1,120 @@
+2025/05/15 09:06:29 Running command: cp /data/m2/repository/com/aihuishou/fusion/aihuishou-agent/1.0.1/aihuishou-agent-1.0.1.jar build-runtime/aihuishou-agent.jar
+2025/05/15 09:06:29 Running command: cp /data/m2/repository/org/jacoco/org.jacoco.agent/0.8.8-RELEASE/org.jacoco.agent-0.8.8-RELEASE.jar build-runtime/jacoco-agent.jar
+2025/05/15 09:06:29 Running command: cp /data/m2/repository/io/opentelemetry/javaagent/opentelemetry-javaagent/2.14.0/opentelemetry-javaagent-2.14.0.jar build-runtime/opentelemetry-javaagent.jar
+2025/05/15 09:06:29 Running command: cp /data/m2/repository/com/aihuishou/fusion/otel-extension/1.0.4-alpha/otel-extension-1.0.4-alpha.jar build-runtime/otel-extension.jar
+2025/05/15 09:06:30 try to find artifactID pay-service in pay-service/target directory
+2025/05/15 09:06:30 artifact was found
+E0515 01:06:36.788799      19 aws_credentials.go:77] while getting AWS credentials NoCredentialProviders: no valid providers in chain. Deprecated.
+	For verbose messaging see aws.Config.CredentialsChainVerboseErrors
+time="2025-05-15T01:06:37Z" level=info msg="Retrieving image manifest ahs-cn-east-2.jcr.service.jdcloud.com/java-service/java:8u332-bullseye"
+time="2025-05-15T01:06:37Z" level=info msg="Retrieving image ahs-cn-east-2.jcr.service.jdcloud.com/java-service/java:8u332-bullseye from registry ahs-cn-east-2.jcr.service.jdcloud.com"
+time="2025-05-15T01:06:38Z" level=info msg="Built cross stage deps: map[]"
+time="2025-05-15T01:06:38Z" level=info msg="Retrieving image manifest ahs-cn-east-2.jcr.service.jdcloud.com/java-service/java:8u332-bullseye"
+time="2025-05-15T01:06:38Z" level=info msg="Returning cached image manifest"
+time="2025-05-15T01:06:38Z" level=info msg="Executing 0 build triggers"
+time="2025-05-15T01:06:38Z" level=info msg="Unpacking rootfs as cmd COPY build-runtime/arthas-boot/v3.6.7/ /usr/src/myapp/ requires it."
+time="2025-05-15T01:06:55Z" level=info msg="ENV APPLICATION_NAME pay-service"
+time="2025-05-15T01:06:55Z" level=info msg="ENV SW_AGENT_NAME pay-service"
+time="2025-05-15T01:06:55Z" level=info msg="COPY build-runtime/arthas-boot/v3.6.7/ /usr/src/myapp/"
+time="2025-05-15T01:06:55Z" level=info msg="Taking snapshot of files..."
+time="2025-05-15T01:06:55Z" level=info msg="COPY build-runtime/aihuishou-agent.jar /usr/src/myapp/"
+time="2025-05-15T01:06:55Z" level=info msg="Taking snapshot of files..."
+time="2025-05-15T01:06:55Z" level=info msg="RUN rm -rf /usr/src/myapp/skywalking-agent/activations && rm -rf /usr/src/myapp/skywalking-agent/optional-plugins && rm -rf /usr/src/myapp/skywalking-agent/plugins && rm -rf /usr/src/myapp/skywalking-agent/skywalking-agent.jar"
+time="2025-05-15T01:06:55Z" level=info msg="Taking snapshot of full filesystem..."
+time="2025-05-15T01:06:59Z" level=info msg="cmd: /bin/sh"
+time="2025-05-15T01:06:59Z" level=info msg="args: [-c rm -rf /usr/src/myapp/skywalking-agent/activations && rm -rf /usr/src/myapp/skywalking-agent/optional-plugins && rm -rf /usr/src/myapp/skywalking-agent/plugins && rm -rf /usr/src/myapp/skywalking-agent/skywalking-agent.jar]"
+time="2025-05-15T01:06:59Z" level=info msg="Running: [/bin/sh -c rm -rf /usr/src/myapp/skywalking-agent/activations && rm -rf /usr/src/myapp/skywalking-agent/optional-plugins && rm -rf /usr/src/myapp/skywalking-agent/plugins && rm -rf /usr/src/myapp/skywalking-agent/skywalking-agent.jar]"
+time="2025-05-15T01:06:59Z" level=info msg="Taking snapshot of full filesystem..."
+time="2025-05-15T01:07:00Z" level=info msg="No files were changed, appending empty layer to config. No layer added to image."
+time="2025-05-15T01:07:00Z" level=info msg="COPY build-runtime/skywalking-agent/snapshot /usr/src/myapp/skywalking-agent"
+time="2025-05-15T01:07:00Z" level=info msg="Taking snapshot of files..."
+time="2025-05-15T01:07:00Z" level=info msg="COPY build-runtime/jacoco-agent.jar /usr/src/myapp/jacoco/lib/jacocoagent.jar"
+time="2025-05-15T01:07:00Z" level=info msg="Taking snapshot of files..."
+time="2025-05-15T01:07:00Z" level=info msg="COPY build-runtime/opentelemetry-javaagent.jar /usr/src/myapp/opentelemetry-javaagent.jar"
+time="2025-05-15T01:07:00Z" level=info msg="Taking snapshot of files..."
+time="2025-05-15T01:07:01Z" level=info msg="COPY build-runtime/otel-extension.jar /usr/src/myapp/otel-extension.jar"
+time="2025-05-15T01:07:01Z" level=info msg="Taking snapshot of files..."
+time="2025-05-15T01:07:01Z" level=info msg="COPY pay-service/target/pay-service.jar /usr/src/myapp/pay-service.jar"
+time="2025-05-15T01:07:01Z" level=info msg="Taking snapshot of files..."
+time="2025-05-15T01:07:03Z" level=info msg="RUN useradd ahs && usermod -s /bin/bash ahs && chmod 600 /opt"
+time="2025-05-15T01:07:03Z" level=info msg="cmd: /bin/sh"
+time="2025-05-15T01:07:03Z" level=info msg="args: [-c useradd ahs && usermod -s /bin/bash ahs && chmod 600 /opt]"
+time="2025-05-15T01:07:03Z" level=info msg="Running: [/bin/sh -c useradd ahs && usermod -s /bin/bash ahs && chmod 600 /opt]"
+time="2025-05-15T01:07:03Z" level=info msg="Taking snapshot of full filesystem..."
+time="2025-05-15T01:07:05Z" level=info msg="WORKDIR /usr/src/myapp"
+time="2025-05-15T01:07:05Z" level=info msg="cmd: workdir"
+time="2025-05-15T01:07:05Z" level=info msg="Changed working directory to /usr/src/myapp"
+time="2025-05-15T01:07:05Z" level=info msg="No files changed in this command, skipping snapshotting."
+time="2025-05-15T01:07:05Z" level=info msg="EXPOSE 8080"
+time="2025-05-15T01:07:05Z" level=info msg="cmd: EXPOSE"
+time="2025-05-15T01:07:05Z" level=info msg="Adding exposed port: 8080/tcp"
+time="2025-05-15T01:07:05Z" level=info msg="EXPOSE 18080"
+time="2025-05-15T01:07:05Z" level=info msg="cmd: EXPOSE"
+time="2025-05-15T01:07:05Z" level=info msg="Adding exposed port: 18080/tcp"
+time="2025-05-15T01:07:05Z" level=info msg="EXPOSE 28080"
+time="2025-05-15T01:07:05Z" level=info msg="cmd: EXPOSE"
+time="2025-05-15T01:07:05Z" level=info msg="Adding exposed port: 28080/tcp"
+time="2025-05-15T01:07:05Z" level=info msg="CMD [\"start_jar.sh\",\"-jar\",\"pay-service.jar\"]"
+time="2025-05-15T01:07:05Z" level=info msg="Pushing image to ahs-cn-east-2.jcr.service.jdcloud.com/java-service/pay-service:uat-jd_8cd27f14_149476"
+time="2025-05-15T01:07:27Z" level=info msg="Pushed image to 1 destinations"
+
+
+Start deploying...
+2025-05-15 09:07:47
+Deployment pay-service has been created
+2025-05-15 09:07:48
+Service pay-service has been created
+2025-05-15 09:07:48
+DestinationRule pay-service not changed
+2025-05-15 09:07:48
+VirtualService pay-service not changed
+2025-05-15 09:07:48
+----------预计20秒后开始定时检查状态 ----------------
+2025-05-15 09:08:05
+DESIRED: 1  READY: 0 
+Service pay-service is starting......
+2025-05-15 09:08:15
+DESIRED: 1  READY: 0 
+Service pay-service is starting......
+2025-05-15 09:08:25
+DESIRED: 1  READY: 0 
+Service pay-service is starting......
+2025-05-15 09:08:35
+DESIRED: 1  READY: 0 
+Service pay-service is starting......
+2025-05-15 09:08:45
+DESIRED: 1  READY: 0 
+Service pay-service is starting......
+2025-05-15 09:08:55
+DESIRED: 1  READY: 0 
+Service pay-service is starting......
+2025-05-15 09:09:05
+DESIRED: 1  READY: 0 
+Service pay-service is starting......
+2025-05-15 09:09:15
+DESIRED: 1  READY: 0 
+Service pay-service is starting......
+2025-05-15 09:09:26
+DESIRED: 1  READY: 0 
+Service pay-service is starting......
+2025-05-15 09:09:35
+DESIRED: 1  READY: 0 
+Service pay-service is starting......
+2025-05-15 09:09:45
+DESIRED: 1  READY: 0 
+Service pay-service is starting......
+2025-05-15 09:09:55
+DESIRED: 1  READY: 0 
+Service pay-service is starting......
+2025-05-15 09:10:05
+DESIRED: 1  READY: 0 
+Service pay-service is starting......
+2025-05-15 09:10:15
+DESIRED: 1  READY: 0 
+Service pay-service is starting......
+2025-05-15 09:10:26
+DESIRED: 1  READY: 0 
+Service pay-service is starting......
+2025-05-15 09:10:35
+DESIRED: 1  READY: 1 
+Service pay-service has been successfully started ******************【注：金丝雀发布需要在 2025-05-15 09:12:49 之后切流量，等待规则下发完毕】
