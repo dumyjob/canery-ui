@@ -1,0 +1,5 @@
+/* 避免与 Ant Design 基础样式冲突 */
+@tailwind utilities;
+
+/* 若需自定义组件层 */
+@tailwind components;
