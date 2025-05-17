@@ -1,6 +1,7 @@
 // The exported code uses Tailwind CSS. Install Tailwind CSS in your dev environment to ensure all styles work.
 
 import React, { useState, useEffect } from 'react';
+import { request } from 'umi';
 import { Table, Input, Select, Button, Tag, Tooltip, Card, Divider, Row, Col, Form, Upload, Space, Tabs, Modal, message, Dropdown, Menu } from 'antd';
 import {
   SearchOutlined,
@@ -44,12 +45,19 @@ const { Option } = Select;
 const { TabPane } = Tabs;
 const { TextArea } = Input;
 
+const projectData = await request('/api/projects/search', {
+  method: 'POST',
+  data: {},
+});
+
 const App: React.FC = () => {
   const [expandedMenu, setExpandedMenu] = useState<string[]>(['项目管理', '部署', '服务']);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [selectedProject, setSelectedProject] = useState<any>(null);
   const [form] = Form.useForm();
+
+ 
   
   const toggleMenu = (menu: string) => {
     if (expandedMenu.includes(menu)) {
@@ -82,15 +90,39 @@ const App: React.FC = () => {
     setIsModalVisible(true);
   };
 
-  const handleModalOk = () => {
+ // 删除项目函数
+  const deleteProject = (projectId: number) => {
+    const data =  request('/api/projects/' + projectId, {
+        method: 'DELETE'
+      })
+  };
+
+  const handleModalOk =  () => {
     form.validateFields().then(values => {
       console.log('Form values:', values);
+
+    values.envVars = values.envVarieables.reduce((acc: { [x: string]: any; }, { key, value }: any) => {
+        acc[key] = value;
+        return acc;
+      }, {});
+
+    
+      const data =  request('/api/projects', {
+        method: modalMode === 'create' ? 'POST' : 'PUT',
+        data: {
+          ...values,
+          id: modalMode === 'edit' ? selectedProject.id : undefined,
+        },
+      })
+
       message.success(modalMode === 'create' ? '项目创建成功！' : '项目更新成功！');
       setIsModalVisible(false);
     }).catch(info => {
       console.log('Validate Failed:', info);
     });
   };
+
+  
 
   const handleModalCancel = () => {
     setIsModalVisible(false);
@@ -122,8 +154,8 @@ const App: React.FC = () => {
     },
     {
       title: '仓库',
-      dataIndex: 'repository',
-      key: 'repository',
+      dataIndex: 'gitRepos',
+      key: 'gitRepos',
       width: 180,
       render: (text: string, record: any) => (
         <div className="flex items-center">
@@ -136,68 +168,64 @@ const App: React.FC = () => {
         </div>
       ),
     },
-    {
-      title: '分支',
-      dataIndex: 'branch',
-      key: 'branch',
+    
+     {
+      title: '项目类型',
+      dataIndex: 'projectType',
+      key: 'projectType',
       width: 120,
-      render: (text: string) => (
-        <div className="flex items-center">
-          <BranchesOutlined className="mr-1 text-gray-600" />
-          <span>{text}</span>
-        </div>
-      ),
-    },
-    {
-      title: '环境',
-      dataIndex: 'environment',
-      key: 'environment',
-      width: 100,
-      render: (env: string) => {
-        let color = 'blue';
-        if (env === '生产环境') {
-          color = 'red';
-        } else if (env === '测试环境') {
-          color = 'green';
-        } else if (env === '开发环境') {
-          color = 'blue';
-        }
-        
+      render: (projectType: string) => {
         return (
-          <Tag color={color} className="px-2 py-0.5">
-            {env}
-          </Tag>
+          <div className="flex items-center">
+            <span>{projectType}</span>
+          </div>
         );
       }
     },
+
     {
-      title: '云服务商',
-      dataIndex: 'cloudProvider',
-      key: 'cloudProvider',
+      title: 'pods',
+      dataIndex: 'pods',
+      key: 'pods',
       width: 120,
-      render: (provider: string) => {
-        let icon = null;
-        if (provider === '阿里云 ACK') {
-          icon = <i className="fas fa-cloud text-orange-500 mr-1"></i>;
-        } else if (provider === '阿里云 SAE') {
-          icon = <i className="fas fa-cloud text-orange-500 mr-1"></i>;
-        } else if (provider === 'AWS ECS') {
-          icon = <i className="fab fa-aws text-yellow-600 mr-1"></i>;
-        }
-        
+      render: (pods: string) => {
         return (
           <div className="flex items-center">
-            {icon}
-            <span>{provider}</span>
+
+            <span>{pods}</span>
           </div>
         );
       }
     },
     {
-      title: '资源规格',
-      dataIndex: 'resourceSpec',
-      key: 'resourceSpec',
+      title: '资源Cpu',
+      dataIndex: 'cpu',
+      key: 'cpu',
       width: 150,
+      render: (cpu: string) => {
+  
+        return (
+          <div className="flex items-center">
+      
+            <span>{cpu}核</span>
+          </div>
+        );
+      }
+    },
+     {
+      title: '资源内存',
+      dataIndex: 'memory',
+      key: 'memory',
+      width: 150,
+      render: (memory: string) => {
+  
+        return (
+          <div className="flex items-center">
+      
+            <span>{memory}G</span>
+          </div>
+        );
+      }
     },
     {
       title: '状态',
@@ -220,6 +248,10 @@ const App: React.FC = () => {
         } else if (status === '部署失败') {
           color = 'red';
           icon = <span className="w-2 h-2 rounded-full bg-red-500 mr-1.5 inline-block"></span>;
+        } else {
+          status = '使用中';
+         color = 'green';
+          icon = <span className="w-2 h-2 rounded-full bg-green-500 mr-1.5 inline-block"></span>;
         }
         
         return (
@@ -232,17 +264,23 @@ const App: React.FC = () => {
         );
       }
     },
+     {
+      title: '最近更新人',
+      dataIndex: 'updateBy',
+      key: 'updateBy',
+      width: 150,
+    },
     {
       title: '最近更新',
-      dataIndex: 'lastUpdated',
-      key: 'lastUpdated',
+      dataIndex: 'updateDt',
+      key: 'updateDt',
       width: 150,
     },
     {
       title: '操作',
       key: 'action',
       width: 150,
-      render: (_, record: any) => (
+      render: (_: any, record: any) => (
         <div className="space-x-2">
           <Button 
             type="text" 
@@ -256,15 +294,35 @@ const App: React.FC = () => {
             className="text-green-500 !rounded-button cursor-pointer"
             onClick={() => message.success(`开始部署项目: ${record.name}`)}
           />
-          <Dropdown overlay={
-            <Menu>
-              <Menu.Item key="1" icon={<SettingOutlined />}>配置</Menu.Item>
-              <Menu.Item key="2" icon={<HistoryOutlined />}>部署历史</Menu.Item>
-              <Menu.Item key="3" icon={<CloudUploadOutlined />}>手动部署</Menu.Item>
-              <Menu.Divider />
-              <Menu.Item key="4" icon={<DeleteOutlined />} danger>删除项目</Menu.Item>
-            </Menu>
-          }>
+          <Dropdown menu={{
+            items: [
+              {
+                key: '1',
+                icon: <SettingOutlined />,
+                label: '配置',
+              },
+              {
+                key: '2',
+                icon: <HistoryOutlined />,
+                label: '部署历史',
+              },
+              {
+                key: '3',
+                icon: <CloudUploadOutlined />,
+                label: '手动部署',
+              },
+              {
+                type: 'divider',
+              },
+              {
+                key: '4',
+                icon: <DeleteOutlined />,
+                label: '删除项目',
+                danger: true,
+                onClick: () => deleteProject(record.id)
+              },
+            ],
+          }}>
             <Button 
               type="text" 
               icon={<EllipsisOutlined />} 
@@ -276,120 +334,8 @@ const App: React.FC = () => {
     },
   ];
 
-  const projectData = [
-    {
-      key: '1',
-      id: 'PRJ-001',
-      name: '用户中心服务',
-      description: '用户认证与授权管理系统',
-      repository: 'org/user-center',
-      repoType: 'github',
-      branch: 'master',
-      environment: '生产环境',
-      cloudProvider: '阿里云 ACK',
-      resourceSpec: '4核8G',
-      status: '运行中',
-      lastUpdated: '2025-05-13 14:30',
-      buildCommand: 'mvn clean package',
-      dockerfilePath: '/docker/Dockerfile',
-    },
-    {
-      key: '2',
-      id: 'PRJ-002',
-      name: '支付网关',
-      description: '统一支付处理服务',
-      repository: 'org/payment-gateway',
-      repoType: 'gitlab',
-      branch: 'release/v2.3',
-      environment: '生产环境',
-      cloudProvider: '阿里云 SAE',
-      resourceSpec: '8核16G',
-      status: '运行中',
-      lastUpdated: '2025-05-12 09:15',
-      buildCommand: 'gradle build',
-      dockerfilePath: '/Dockerfile',
-    },
-    {
-      key: '3',
-      id: 'PRJ-003',
-      name: '订单管理系统',
-      description: '订单处理与物流跟踪',
-      repository: 'org/order-management',
-      repoType: 'github',
-      branch: 'develop',
-      environment: '测试环境',
-      cloudProvider: 'AWS ECS',
-      resourceSpec: '2核4G',
-      status: '构建中',
-      lastUpdated: '2025-05-14 10:45',
-      buildCommand: 'npm run build',
-      dockerfilePath: '/docker/Dockerfile.dev',
-    },
-    {
-      key: '4',
-      id: 'PRJ-004',
-      name: '数据分析平台',
-      description: '业务数据可视化与分析',
-      repository: 'org/data-analytics',
-      repoType: 'gitlab',
-      branch: 'feature/dashboard',
-      environment: '开发环境',
-      cloudProvider: '阿里云 ACK',
-      resourceSpec: '4核8G',
-      status: '已停止',
-      lastUpdated: '2025-05-10 16:20',
-      buildCommand: 'yarn build',
-      dockerfilePath: '/Dockerfile',
-    },
-    {
-      key: '5',
-      id: 'PRJ-005',
-      name: '内容管理系统',
-      description: '企业内容发布与管理',
-      repository: 'org/cms-platform',
-      repoType: 'github',
-      branch: 'main',
-      environment: '生产环境',
-      cloudProvider: 'AWS ECS',
-      resourceSpec: '4核8G',
-      status: '运行中',
-      lastUpdated: '2025-05-11 11:30',
-      buildCommand: 'npm run build:prod',
-      dockerfilePath: '/docker/Dockerfile.prod',
-    },
-    {
-      key: '6',
-      id: 'PRJ-006',
-      name: '消息推送服务',
-      description: '多渠道消息通知系统',
-      repository: 'org/notification-service',
-      repoType: 'gitlab',
-      branch: 'master',
-      environment: '测试环境',
-      cloudProvider: '阿里云 SAE',
-      resourceSpec: '2核4G',
-      status: '部署失败',
-      lastUpdated: '2025-05-14 08:50',
-      buildCommand: 'mvn package -DskipTests',
-      dockerfilePath: '/Dockerfile',
-    },
-    {
-      key: '7',
-      id: 'PRJ-007',
-      name: '搜索引擎服务',
-      description: '全文检索与智能推荐',
-      repository: 'org/search-engine',
-      repoType: 'github',
-      branch: 'release/v1.5',
-      environment: '生产环境',
-      cloudProvider: '阿里云 ACK',
-      resourceSpec: '8核16G',
-      status: '运行中',
-      lastUpdated: '2025-05-09 15:40',
-      buildCommand: 'gradle build -x test',
-      dockerfilePath: '/docker/Dockerfile',
-    },
-  ];
+
+ 
 
   // 生成背景图片的URL
   const heroImageUrl = 'https://readdy.ai/api/search-image?query=Modern%20digital%20project%20management%20dashboard%20with%20blue%20and%20white%20color%20scheme%2C%20showing%20deployment%20status%2C%20git%20repositories%2C%20and%20cloud%20infrastructure.%20Professional%20UI%20design%20with%20clean%20layout%20and%20subtle%20grid%20pattern%20in%20background%2C%20high%20quality%203D%20visualization%20of%20deployment%20pipeline%20and%20project%20management%20workflow&width=600&height=300&seq=12345&orientation=landscape';
@@ -645,7 +591,7 @@ const App: React.FC = () => {
       {/* 创建/编辑项目模态框 */}
       <Modal
         title={modalMode === 'create' ? '创建新项目' : '编辑项目'}
-        visible={isModalVisible}
+        open={isModalVisible}
         onOk={handleModalOk}
         onCancel={handleModalCancel}
         width={800}
@@ -675,7 +621,7 @@ const App: React.FC = () => {
           <Tabs defaultActiveKey="1">
             <TabPane tab="基础信息" key="1">
               <Row gutter={16}>
-                <Col span={12}>
+                <Col span={8}>
                   <Form.Item
                     name="name"
                     label="项目名称"
@@ -684,24 +630,9 @@ const App: React.FC = () => {
                     <Input placeholder="请输入项目名称" />
                   </Form.Item>
                 </Col>
-                <Col span={12}>
+                 <Col span={16}>
                   <Form.Item
-                    name="environment"
-                    label="环境"
-                    rules={[{ required: true, message: '请选择环境' }]}
-                  >
-                    <Select placeholder="请选择环境">
-                      <Option value="开发环境">开发环境</Option>
-                      <Option value="测试环境">测试环境</Option>
-                      <Option value="生产环境">生产环境</Option>
-                    </Select>
-                  </Form.Item>
-                </Col>
-              </Row>
-              <Row gutter={16}>
-                <Col span={16}>
-                  <Form.Item
-                    name="repository"
+                    name="gitRepos"
                     label="Git 仓库地址"
                     rules={[{ required: true, message: '请输入 Git 仓库地址' }]}
                   >
@@ -716,16 +647,38 @@ const App: React.FC = () => {
                     />
                   </Form.Item>
                 </Col>
+              </Row>
+             <Row gutter={16}>
                 <Col span={8}>
                   <Form.Item
-                    name="branch"
-                    label="分支"
-                    rules={[{ required: true, message: '请输入分支名称' }]}
+                    name="projectType"
+                    label="项目类型"
+                    rules={[{ required: true, message: '请选择项目类型' }]}
                   >
-                    <Input placeholder="例如: master, main, develop" prefix={<BranchesOutlined />} />
+                    <Select placeholder="请选择项目类型">
+                      <Option value="spring-boot-jar">spring-boot-jar</Option>
+                      <Option value="dubbo">dubbo</Option>
+                      <Option value="node-js">node-js</Option>
+                    </Select>
+              
+                  </Form.Item>
+                </Col>
+                
+                <Col span={16}>
+                  <Form.Item
+                    name="webhook"
+                    label="webhok通知地址"
+                    rules={[{ required: false, message: '请输入 Git 仓库地址' }]}
+                  >
+                    <Input 
+                      placeholder="例如: https://github.com/organization/repository" 
+                  
+                    />
                   </Form.Item>
                 </Col>
               </Row>
+
+
               <Form.Item
                 name="description"
                 label="项目描述"
@@ -780,37 +733,28 @@ const App: React.FC = () => {
               <Row gutter={16}>
                 <Col span={12}>
                   <Form.Item
-                    name="cloudProvider"
-                    label="云服务商"
-                    rules={[{ required: true, message: '请选择云服务商' }]}
+                    name="cpu"
+                    label="cpu核数"
+                    rules={[{ required: true, message: '请输入cpu核数' }]}
                   >
-                    <Select placeholder="请选择云服务商">
-                      <Option value="阿里云 ACK">阿里云 ACK</Option>
-                      <Option value="阿里云 SAE">阿里云 SAE</Option>
-                      <Option value="AWS ECS">AWS ECS</Option>
-                    </Select>
+                    <Input type="number" min={1} max={50} defaultValue={2} />
                   </Form.Item>
                 </Col>
                 <Col span={12}>
                   <Form.Item
-                    name="resourceSpec"
-                    label="资源规格"
-                    rules={[{ required: true, message: '请选择资源规格' }]}
+                    name="memory"
+                    label="内存大小(G)"
+                    rules={[{ required: true, message: '请输入内存大小' }]}
                   >
-                    <Select placeholder="请选择资源规格">
-                      <Option value="2核4G">2核4G</Option>
-                      <Option value="4核8G">4核8G</Option>
-                      <Option value="8核16G">8核16G</Option>
-                      <Option value="16核32G">16核32G</Option>
-                    </Select>
+                    <Input type="number" min={1} max={50} defaultValue={2} />
                   </Form.Item>
                 </Col>
               </Row>
               <Row gutter={16}>
                 <Col span={12}>
                   <Form.Item
-                    name="replicas"
-                    label="副本数量"
+                    name="pods"
+                    label="pod数量"
                   >
                     <Input type="number" min={1} max={10} defaultValue={2} />
                   </Form.Item>
@@ -866,50 +810,56 @@ const App: React.FC = () => {
                   <div className="font-medium">环境变量列表</div>
                   <div className="text-gray-500 text-sm">共 3 项</div>
                 </div>
-                <div className="space-y-3">
-                  <div className="flex items-center">
-                    <div className="w-1/3 pr-2">
-                      <Input placeholder="键" defaultValue="NODE_ENV" />
-                    </div>
-                    <div className="w-2/3 pl-2 flex">
-                      <Input placeholder="值" defaultValue="production" className="flex-1" />
-                      <Button 
-                        type="text" 
-                        danger 
-                        icon={<DeleteOutlined />} 
-                        className="ml-2 !rounded-button cursor-pointer"
-                      />
-                    </div>
+
+                
+              <Form.List name="envVarieables">
+                {(fields, { add, remove }) => (
+                  <div className="space-y-3">
+                    {fields.map(({ key, name }) => (
+                      <div className="flex items-center" key={key}>
+                        {/* 键输入 */}
+                        <Form.Item
+                          name={[name, 'key']}
+                          className="w-1/3 pr-2 mb-0"
+                          rules={[{ required: true, message: '键不能为空' }]}
+                        >
+                          <Input placeholder="键" />
+                        </Form.Item>
+                        
+                        {/* 值输入 */}
+                        <Form.Item
+                          name={[name, 'value']}
+                          className="w-2/3 pl-2 flex mb-0"
+                          rules={[{ required: true, message: '值不能为空' }]}
+                        >
+                          <div className="flex items-center w-full">
+                            <Input placeholder="值" className="flex-1" />
+                            <Button
+                              type="text"
+                              danger
+                              icon={<DeleteOutlined />}
+                              onClick={() => remove(name)}
+                              className="ml-2 !rounded-button"
+                            />
+                          </div>
+                        </Form.Item>
+                      </div>
+                    ))}
+                    
+                    {/* 添加按钮 */}
+                    <Button
+                      type="dashed"
+                      onClick={() => add()}
+                      icon={<PlusOutlined />}
+                      block
+                    >
+                      新增环境变量
+                    </Button>
                   </div>
-                  <div className="flex items-center">
-                    <div className="w-1/3 pr-2">
-                      <Input placeholder="键" defaultValue="PORT" />
-                    </div>
-                    <div className="w-2/3 pl-2 flex">
-                      <Input placeholder="值" defaultValue="8080" className="flex-1" />
-                      <Button 
-                        type="text" 
-                        danger 
-                        icon={<DeleteOutlined />} 
-                        className="ml-2 !rounded-button cursor-pointer"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex items-center">
-                    <div className="w-1/3 pr-2">
-                      <Input placeholder="键" defaultValue="LOG_LEVEL" />
-                    </div>
-                    <div className="w-2/3 pl-2 flex">
-                      <Input placeholder="值" defaultValue="info" className="flex-1" />
-                      <Button 
-                        type="text" 
-                        danger 
-                        icon={<DeleteOutlined />} 
-                        className="ml-2 !rounded-button cursor-pointer"
-                      />
-                    </div>
-                  </div>
-                </div>
+                )}
+              </Form.List>
+
+                
               </div>
               <Form.Item
                 name="envFile"

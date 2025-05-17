@@ -3,7 +3,15 @@ import { defineConfig } from '@umijs/max';
 
 
 export default defineConfig({
-
+  // 转发api请求到后端
+  proxy: {
+    '/api': {
+      target: 'http://127.0.0.1:8080',
+      logLevel: 'debug',
+      changeOrigin: true,
+      // pathRewrite: { '^/api': '' } // 移除路径前缀
+    }
+  },
   antd: {},
   access: {},
   model: {},

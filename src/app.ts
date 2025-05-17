@@ -1,5 +1,7 @@
 // 运行时配置
 
+import { RequestConfig } from "@umijs/max";
+
 // 全局初始化数据配置，用于 Layout 用户信息和权限初始化
 // 更多信息见文档：https://umijs.org/docs/api/runtime-config#getinitialstate
 export async function getInitialState(): Promise<{ name: string }> {
@@ -13,4 +15,13 @@ export const layout = () => {
       locale: false,
     },
   };
+};
+
+
+export const request: RequestConfig = {
+  timeout: 10000,
+  headers: { 'X-Custom-Header': 'value' },
+  errorConfig: { // 统一错误处理
+    // You can add errorHandler or errorThrower here if needed
+  }
 };
