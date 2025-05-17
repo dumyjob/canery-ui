@@ -73,19 +73,30 @@ const App: React.FC = () => {
     setIsModalVisible(true);
   };
 
-  const showEditModal = (record: any) => {
+  const showEditModal = async (record: any) => {
     setModalMode('edit');
-    setSelectedProject(record);
+
+    const project = await request('/api/projects/' + record.id, {  
+      method: 'GET'
+    });
+
+    setSelectedProject(project);
+    const envVariables = Object.entries(project.envVars || {}).map(([key, value]) => ({
+      key,
+      value
+    }));
     form.setFieldsValue({
-      name: record.name,
-      repository: record.repository,
-      branch: record.branch,
-      buildCommand: record.buildCommand,
-      dockerfilePath: record.dockerfilePath,
-      cloudProvider: record.cloudProvider,
-      resourceSpec: record.resourceSpec,
-      environment: record.environment,
-      description: record.description,
+      name: project.name,
+      gitRepos: project.gitRepos,
+      projectType: project.projectType,
+      webhook: project.webhook,
+      description: project.description,
+      buildCommand: project.buildCommand,
+      dockerfilePath: project.dockerfilePath,
+      pods: project.pods,
+      cpu: project.cpu,
+      memory: project.memory,
+      envVarieables: envVariables ,
     });
     setIsModalVisible(true);
   };
@@ -694,7 +705,7 @@ const App: React.FC = () => {
                     label="构建命令"
                     rules={[{ required: true, message: '请输入构建命令' }]}
                   >
-                    <Input placeholder="例如: mvn clean package, npm run build" />
+                    <Input placeholder="例如: mvn clean package, npm run build" defaultValue={'mvn clean package'} />
                   </Form.Item>
                 </Col>
                 <Col span={12}>
@@ -703,7 +714,7 @@ const App: React.FC = () => {
                     label="Dockerfile 路径"
                     rules={[{ required: true, message: '请输入 Dockerfile 路径' }]}
                   >
-                    <Input placeholder="例如: /Dockerfile, /docker/Dockerfile.prod" />
+                    <Input placeholder="例如: /Dockerfile, /docker/Dockerfile.prod" defaultValue={'/Dockerfile'} />
                   </Form.Item>
                 </Col>
               </Row>
@@ -832,17 +843,25 @@ const App: React.FC = () => {
                           className="w-2/3 pl-2 flex mb-0"
                           rules={[{ required: true, message: '值不能为空' }]}
                         >
-                          <div className="flex items-center w-full">
-                            <Input placeholder="值" className="flex-1" />
-                            <Button
-                              type="text"
-                              danger
-                              icon={<DeleteOutlined />}
-                              onClick={() => remove(name)}
-                              className="ml-2 !rounded-button"
-                            />
-                          </div>
+                          <Input
+                            placeholder="值"
+                            className="flex-1"
+                            // 绑定 value 和 onChange
+                            value={form.getFieldValue(['envVarieables', name, 'value'])}
+                            onChange={e => {
+                              const envVars = form.getFieldValue('envVarieables') || [];
+                              envVars[name] = { ...envVars[name], value: e.target.value };
+                              form.setFieldsValue({ envVarieables: envVars });
+                            }}
+                          />
                         </Form.Item>
+                        <Button
+                          type="text"
+                          danger
+                          icon={<DeleteOutlined />}
+                          onClick={() => remove(name)}
+                          className="ml-2 !rounded-button"
+                        />
                       </div>
                     ))}
                     
