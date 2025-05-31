@@ -43,6 +43,8 @@ import {
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination, Autoplay } from 'swiper/modules';
 import { useParams } from "react-router-dom";
+import { Client } from '@stomp/stompjs';
+import SockJS from 'sockjs-client'
 
 const { Option } = Select;
 const { TabPane } = Tabs;
@@ -59,7 +61,7 @@ interface DeploymentStage {
 interface LogEntry {
   timestamp: string;
   level: 'info' | 'warning' | 'error';
-  message: string;
+  content: string;
 }
 
 const App: React.FC = () => {
@@ -82,6 +84,8 @@ const App: React.FC = () => {
         });
     }
   }, [id]);
+
+
   const [expandedMenu, setExpandedMenu] = useState<string[]>(['项目管理', '部署', '服务']);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
@@ -97,13 +101,46 @@ const App: React.FC = () => {
     { name: '部署', status: 'waiting', progress: 0 }
   ]);
 
-  const [deploymentLogs, setDeploymentLogs] = useState<LogEntry[]>([
-    { timestamp: '2025-05-14 10:30:15', level: 'info', message: '开始部署流程...' },
-    { timestamp: '2025-05-14 10:30:16', level: 'info', message: '正在从 Git 仓库拉取代码...' },
-    { timestamp: '2025-05-14 10:30:18', level: 'info', message: '代码拉取成功，开始构建...' },
-    { timestamp: '2025-05-14 10:30:20', level: 'warning', message: '依赖包安装过程中发现过时包，建议更新' },
-    { timestamp: '2025-05-14 10:30:25', level: 'error', message: '构建过程中发现语法错误：unexpected token' }
-  ]);
+  const [deploymentLogs, setDeploymentLogs] = useState<LogEntry[]>([]);
+
+  // 拉取历史日志
+  useEffect(() => {
+    if (!id) return;
+    const fetchHistoryLogs = async () => {
+      try {
+        const response = await fetch(`/api/tasks/${id}/logs`);
+        const historyLogs = await response.json();
+        setDeploymentLogs(historyLogs || []);
+      } catch (error) {
+        console.error('加载历史日志失败:', error);
+      }
+    };
+    fetchHistoryLogs();
+  }, [id]);
+
+  // WebSocket 连接获取实时日志
+  useEffect(() => {
+    if (!id) return;
+
+    const socket = new SockJS('http://localhost:8080/ws-logs'); // 修正连接端点
+      const stompClient = new Client({
+        webSocketFactory: () => socket,
+        reconnectDelay: 5000,
+        debug: (str) => console.log("[STOMP] ", str),
+      });
+
+    stompClient.onConnect = () => {
+      // 正确订阅代理路径
+      stompClient.subscribe(`/topic/logs/${id}`, (message) => {
+        const logEntry = JSON.parse(message.body);
+        setDeploymentLogs(prev => [logEntry, ...prev]);
+      });
+    };  
+
+    stompClient.activate();
+    return () => stompClient.deactivate(); // 清理时断开连接
+  }, [id]);
+
 
   const [logFilter, setLogFilter] = useState('');
   const [isDeploying, setIsDeploying] = useState(true);
@@ -154,7 +191,7 @@ const App: React.FC = () => {
             { 
               timestamp, 
               level, 
-              message: messages[Math.floor(Math.random() * messages.length)] 
+              content: messages[Math.floor(Math.random() * messages.length)] 
             },
             ...prevLogs
           ]);
@@ -167,7 +204,7 @@ const App: React.FC = () => {
 
   // Filter logs based on search keyword
   const filteredLogs = deploymentLogs.filter(log =>
-    log.message.toLowerCase().includes(logFilter.toLowerCase())
+    log.content.toLowerCase().includes(logFilter.toLowerCase())
   );
 
   // Handle deployment termination
@@ -638,7 +675,7 @@ const App: React.FC = () => {
                 'text-green-400'
               }`}
             >
-              <span className="text-gray-500">[{log.timestamp}]</span> {log.message}
+              <span className="text-gray-500">[{log.timestamp}]</span> {log.content}
             </div>
           ))}
         </div>
