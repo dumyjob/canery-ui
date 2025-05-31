@@ -103,13 +103,16 @@ const App: React.FC = () => {
 
   const [deploymentLogs, setDeploymentLogs] = useState<LogEntry[]>([]);
 
-  // 拉取历史日志
+  // 拉取历史日志（按时间降序，最新日志在最上面）
   useEffect(() => {
     if (!id) return;
     const fetchHistoryLogs = async () => {
       try {
         const response = await fetch(`/api/tasks/${id}/logs`);
-        const historyLogs = await response.json();
+        let historyLogs = await response.json();
+        if (Array.isArray(historyLogs)) {
+            historyLogs = historyLogs.reverse();
+        }
         setDeploymentLogs(historyLogs || []);
       } catch (error) {
         console.error('加载历史日志失败:', error);
@@ -169,33 +172,7 @@ const App: React.FC = () => {
           return newStages;
         });
         
-        // Add new log entries
-        if (Math.random() > 0.7) {
-          const levels: ('info' | 'warning' | 'error')[] = ['info', 'warning', 'error'];
-          const level = levels[Math.floor(Math.random() * levels.length)];
-          const messages = [
-            '正在检查依赖项...',
-            '正在编译源代码...',
-            '正在执行单元测试...',
-            '正在构建 Docker 镜像...',
-            '正在推送镜像到仓库...',
-            '正在部署到目标环境...',
-            '正在执行健康检查...',
-            '正在更新路由配置...'
-          ];
-          
-          const now = new Date();
-          const timestamp = `2025-05-14 ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
-          
-          setDeploymentLogs(prevLogs => [
-            { 
-              timestamp, 
-              level, 
-              content: messages[Math.floor(Math.random() * messages.length)] 
-            },
-            ...prevLogs
-          ]);
-        }
+      
       }, 2000);
       
       return () => clearInterval(timer);
@@ -722,25 +699,63 @@ const App: React.FC = () => {
           <div className="space-y-4">
             <div className="flex justify-between border-b pb-2">
               <span className="text-gray-500">代码仓库</span>
-              <div className="flex items-center">
-                <GithubOutlined className="mr-1 text-gray-600" />
-                <span className="font-medium">org/user-center</span>
-              </div>
+                <div className="flex items-center">
+                {projectDetail?.gitRepos?.includes('github.com') ? (
+                  <GithubOutlined className="mr-1 text-gray-600" />
+                ) : (
+                  <GitlabOutlined className="mr-1 text-gray-600" />
+                )}
+                {projectDetail?.gitRepos ? (
+                  <a
+                  href={
+                    projectDetail.gitRepos.startsWith('http')
+                    ? projectDetail.gitRepos
+                    : projectDetail.gitRepos.startsWith('git@github.com:')
+                    ? `https://github.com/${projectDetail.gitRepos.replace(/^git@github\.com:/, '').replace(/\.git$/, '')}`
+                    : projectDetail.gitRepos.startsWith('git@gitlab.com:')
+                    ? `https://gitlab.com/${projectDetail.gitRepos.replace(/^git@gitlab\.com:/, '').replace(/\.git$/, '')}`
+                    : '#'
+                  }
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-blue-600 hover:underline"
+                  >
+                  {(() => {
+                    if (projectDetail.gitRepos.startsWith('git@github.com:')) {
+                    return projectDetail.gitRepos.replace(/^git@github\.com:/, '').replace(/\.git$/, '');
+                    }
+                    if (projectDetail.gitRepos.startsWith('git@gitlab.com:')) {
+                    return projectDetail.gitRepos.replace(/^git@gitlab\.com:/, '').replace(/\.git$/, '');
+                    }
+                    if (projectDetail.gitRepos.startsWith('http')) {
+                    // http(s)://github.com/org/repo(.git)
+                    const match = projectDetail.gitRepos.match(/github\.com\/([^/]+\/[^/.]+)/) || projectDetail.gitRepos.match(/gitlab\.com\/([^/]+\/[^/.]+)/);
+                    return match ? match[1] : projectDetail.gitRepos;
+                    }
+                    return projectDetail.gitRepos;
+                  })()}
+                  </a>
+                ) : (
+                  <span className="font-medium text-gray-400">未知仓库</span>
+                )}
+                </div>
             </div>
             <div className="flex justify-between border-b pb-2">
               <span className="text-gray-500">分支</span>
               <div className="flex items-center">
                 <BranchesOutlined className="mr-1 text-gray-600" />
-                <span className="font-medium">master</span>
+                <span className="font-medium">{taskDetail?.branch || '-'}</span>
               </div>
             </div>
             <div className="flex justify-between border-b pb-2">
               <span className="text-gray-500">提交 ID</span>
-              <span className="font-medium">a1b2c3d4e5f6g7h8i9j0</span>
+                <span className="font-medium">{taskDetail?.commitId || '-'}</span>
             </div>
             <div className="flex justify-between border-b pb-2">
               <span className="text-gray-500">提交信息</span>
-              <span className="font-medium truncate max-w-[250px]">修复用户登录验证逻辑</span>
+                <span className="font-medium truncate max-w-[250px]">
+                {taskDetail?.commitMessage || '-'}
+                </span>
             </div>
             <div className="flex justify-between border-b pb-2">
               <span className="text-gray-500">构建命令</span>
