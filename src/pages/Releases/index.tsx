@@ -9,6 +9,10 @@ import {
   ReloadOutlined,
   SearchOutlined,
   SettingOutlined,
+  EllipsisOutlined,
+  CloudUploadOutlined,
+  DeleteOutlined,
+  RocketOutlined,
 } from '@ant-design/icons';
 import { request } from '@umijs/max';
 import {
@@ -25,9 +29,14 @@ import {
   Tabs,
   Tag,
   Tooltip,
+  Dropdown,
+  Menu,
 } from 'antd';
 import TabPane from 'antd/es/tabs/TabPane';
 import React, { useState } from 'react';
+// 使用 useNavigate 钩子
+import { useNavigate } from "react-router-dom";
+
 
 const { Option } = Select;
 
@@ -37,6 +46,9 @@ const releaseData  = await request('/api/releases/search', {
 })
 
 const App: React.FC = () => {
+
+  const navigate = useNavigate();
+
   const [expandedMenu, setExpandedMenu] = useState<string[]>([
     '应用',
     '部署',
@@ -125,6 +137,30 @@ const App: React.FC = () => {
     } else {
       setExpandedMenu([...expandedMenu, menu]);
     }
+  };
+
+  // 删除发布单函数
+  const deleteRelease = async (id: string) => {
+    try {
+      await request(`/api/releases/${id}`, {
+        method: 'DELETE',
+      });
+      message.success('发布单删除成功！');
+      // 刷新数据列表
+      refreshReleaseData();
+    } catch (error) {
+      message.error('删除发布单失败');
+    }
+  };
+
+  // 刷新发布单数据
+  const [releaseList, setReleaseList] = useState(releaseData);
+  const refreshReleaseData = async () => {
+    const data = await request('/api/releases/search', {
+      method: 'POST',
+      data: {},
+    });
+    setReleaseList(data);
   };
 
   const columns = [
@@ -224,22 +260,67 @@ const App: React.FC = () => {
     {
       title: '操作',
       key: 'action',
-      width: 150,
+      width: 180,
       render: (record: any) => (
         <div className="space-x-2">
-          <Button
+            <Button
             type="link"
             className="text-blue-500 p-0 whitespace-nowrap !rounded-button cursor-pointer"
             onClick={() => showEditModal(record)}
-          >
+            icon={<SettingOutlined />}
+            >
             编辑
-          </Button>
-          <Button
-            type="link"
-            className="text-blue-500 p-0 whitespace-nowrap !rounded-button cursor-pointer"
-          >
-            更多操作
-          </Button>
+            </Button>
+            <Button
+              type="text"
+              className="text-green-500 p-0 whitespace-nowrap !rounded-button cursor-pointer"
+              icon={<RocketOutlined />}
+              onClick={async () => {
+              try {
+                const deploys = await request(`/api/releases/deploy/${record.id}`, {
+                method: 'POST',
+                });
+                console.log('发布任务已创建:', deploys[0]);
+                message.success('发布任务已创建！' + deploys[0]);
+
+                navigate("/deploy/" + deploys[0]); // 跳转到部署详情页面
+              } catch (error) {
+                message.error('发布操作失败');
+              }
+              }}
+            >
+              发布
+            </Button>
+            <Dropdown menu={{
+            items: [
+              {
+              key: '1',
+              icon: <HistoryOutlined />,
+              label: '部署历史',
+              },
+              {
+              key: '2',
+              icon: <CloudUploadOutlined />,
+              label: '手动部署',
+              },
+              {
+              type: 'divider',
+              },
+              {
+              key: '3',
+              icon: <DeleteOutlined />,
+              label: '删除发布单',
+              danger: true,
+              onClick: () => deleteRelease(record.id)
+              },
+            ],
+            }}>
+            <Button 
+              type="text" 
+              icon={<EllipsisOutlined />} 
+              className="!rounded-button cursor-pointer"
+            />
+            </Dropdown>
         </div>
       ),
     },

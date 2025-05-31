@@ -41,7 +41,7 @@ export default defineConfig({
     },
    {
       name: '应用部署',
-      path: '/deploy',
+      path: '/deploy/:id',
       component: './Deploys',
     },
      {
