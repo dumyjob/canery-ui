@@ -42,6 +42,7 @@ import {
 } from '@ant-design/icons';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination, Autoplay } from 'swiper/modules';
+import { useParams } from "react-router-dom";
 
 const { Option } = Select;
 const { TabPane } = Tabs;
@@ -62,6 +63,25 @@ interface LogEntry {
 }
 
 const App: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const [taskDetail, setTaskDetail] = useState<any>(null);
+  const [projectDetail, setProjectDetail] = useState<any>(null);
+
+  useEffect(() => {
+    if (id) {
+      fetch(`/api/tasks/${id}`)
+        .then(res => res.json())
+        .then(data => {
+          console.log('Task detail:', data);
+          setTaskDetail(data);
+          if (data?.projectId) {
+            fetch(`/api/projects/${data.projectId}`)
+              .then(res => res.json())
+              .then(setProjectDetail);
+          }
+        });
+    }
+  }, [id]);
   const [expandedMenu, setExpandedMenu] = useState<string[]>(['项目管理', '部署', '服务']);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
@@ -521,7 +541,18 @@ const App: React.FC = () => {
         <div className="flex justify-between items-center mb-6">
           <div>
             <h2 className="text-xl font-medium mb-2">部署进度</h2>
-            <p className="text-gray-500">项目：用户中心服务 / 分支：master / 构建 #1234</p>
+            {taskDetail ? (
+                <p className="text-gray-500">
+                项目：
+                {projectDetail
+                  ? projectDetail.name
+                  : taskDetail.name || '未知项目'}
+                {' / '}
+                分支：{taskDetail.branch || '-'} / 构建 #{id}
+                </p>
+            ) : (
+              <p className="text-gray-400">加载中...</p>
+            )}
           </div>
           <div className="space-x-4">
             <Button
