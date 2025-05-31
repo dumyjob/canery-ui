@@ -642,14 +642,21 @@ const App: React.FC = () => {
             </Button>
           </div>
         </div>
-        <div className="bg-gray-900 rounded-lg p-4 h-[400px] overflow-y-auto font-mono text-sm">
+        <div className="relative bg-gray-900 rounded-lg p-4 h-[400px] overflow-y-auto font-mono text-sm">
+          {/* 顶部缓冲圈 */}
+          {isDeploying && taskDetail?.status !== 'SUCCESS' && taskDetail?.status !== 'FAILED' && (
+            <div className="flex items-center mb-4">
+              <ReloadOutlined spin className="text-blue-400 mr-2 text-lg" />
+              <span className="text-gray-300 text-xs">正在拉取最新日志...</span>
+            </div>
+          )}
           {filteredLogs.map((log, index) => (
             <div
               key={index}
               className={`mb-2 ${
-                log.level === 'error' ? 'text-red-400' :
-                log.level === 'warning' ? 'text-yellow-400' :
-                'text-green-400'
+          log.level === 'error' ? 'text-red-400' :
+          log.level === 'warning' ? 'text-yellow-400' :
+          'text-green-400'
               }`}
             >
               <span className="text-gray-500">[{log.timestamp}]</span> {log.content}
