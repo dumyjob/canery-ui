@@ -650,18 +650,31 @@ const App: React.FC = () => {
               <span className="text-gray-300 text-xs">正在拉取最新日志...</span>
             </div>
           )}
-          {filteredLogs.map((log, index) => (
-            <div
-              key={index}
-              className={`mb-2 ${
-          log.level === 'error' ? 'text-red-400' :
-          log.level === 'warning' ? 'text-yellow-400' :
-          'text-green-400'
-              }`}
-            >
-              <span className="text-gray-500">[{log.timestamp}]</span> {log.content}
-            </div>
-          ))}
+            {filteredLogs.map((log, index) => {
+              // 检查日志内容中 error/warning 是否在前20个字符内（忽略大小写和可选中括号/数字/空格）
+              const contentTrim = log.content.trim();
+              const lower = contentTrim.toLowerCase();
+              let colorClass = 'text-green-400';
+              // 匹配前缀中可能有 #6 [error]、[warning]、error、warning 等
+              const prefix = lower.slice(0, 10);
+              if (
+              /\berror\b|\[error\]/.test(prefix)
+              ) {
+              colorClass = 'text-red-400';
+              } else if (
+              /\bwarning\b|\[warning\]/.test(prefix)
+              ) {
+              colorClass = 'text-yellow-400';
+              }
+              return (
+              <div
+                key={index}
+                className={`mb-2 ${colorClass}`}
+              >
+                <span className="text-gray-500">[{log.timestamp}]</span> {log.content}
+              </div>
+              );
+            })}
         </div>
       </Card>
       
