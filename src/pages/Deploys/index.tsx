@@ -181,7 +181,7 @@ const App: React.FC = () => {
 
   // Filter logs based on search keyword
   const filteredLogs = deploymentLogs.filter(log =>
-    log.content.toLowerCase().includes(logFilter.toLowerCase())
+    (log.content ?? '').toLowerCase().includes(logFilter.toLowerCase())
   );
 
   // Handle deployment termination
@@ -650,31 +650,39 @@ const App: React.FC = () => {
               <span className="text-gray-300 text-xs">正在拉取最新日志...</span>
             </div>
           )}
-            {filteredLogs.map((log, index) => {
-              // 检查日志内容中 error/warning 是否在前20个字符内（忽略大小写和可选中括号/数字/空格）
-              const contentTrim = log.content.trim();
+            {filteredLogs.length === 0 ? (
+              <div className="flex items-center justify-center h-40 text-gray-400">
+              <ReloadOutlined spin className="mr-2" />
+              加载中...
+              </div>
+            ) : (
+              filteredLogs.map((log, index) => {
+              // 处理 log.content 可能为 null 的情况
+              const content = log.content ?? '';
+              const contentTrim = content.trim();
               const lower = contentTrim.toLowerCase();
               let colorClass = 'text-green-400';
               // 匹配前缀中可能有 #6 [error]、[warning]、error、warning 等
-              const prefix = lower.slice(0, 10);
+              const prefix = lower.slice(0, 20);
               if (
-              /\berror\b|\[error\]/.test(prefix)
+                /\berror\b|\[error\]/.test(prefix)
               ) {
-              colorClass = 'text-red-400';
+                colorClass = 'text-red-400';
               } else if (
-              /\bwarning\b|\[warning\]/.test(prefix)
+                /\bwarning\b|\[warning\]/.test(prefix)
               ) {
-              colorClass = 'text-yellow-400';
+                colorClass = 'text-yellow-400';
               }
               return (
-              <div
+                <div
                 key={index}
                 className={`mb-2 ${colorClass}`}
-              >
-                <span className="text-gray-500">[{log.timestamp}]</span> {log.content}
-              </div>
+                >
+                <span className="text-gray-500">[{log.timestamp}]</span> {content}
+                </div>
               );
-            })}
+              })
+            )}
         </div>
       </Card>
       
