@@ -670,6 +670,8 @@ const App: React.FC = () => {
                       <Option value="spring-boot-jar">spring-boot-jar</Option>
                       <Option value="dubbo">dubbo</Option>
                       <Option value="node-js">node-js</Option>
+                      <Option value="react">react</Option>
+                      <Option value="python">python</Option>
                     </Select>
               
                   </Form.Item>
